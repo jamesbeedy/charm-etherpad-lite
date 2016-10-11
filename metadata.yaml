@@ -1,0 +1,20 @@
+name: etherpad-lite
+summary: Etherpad is a real time collaborative word processor for the web.
+description: |
+  Etherpad is a really-real time collaborative editor maintained by the Etherpad Community.
+
+  Etherpad is written in JavaScript (99.9%) on both the server and client so it's easy for developers to maintain and add new features. Because of this Etherpad has tons of customizations that you can leverage.
+tags:
+  - applications
+  - etherpad
+  - groupware
+maintainer: James Beedy <jamesbeedy@gmail.com>
+series:
+  - xenial
+provides:
+  website:
+    interface: http
+requires:
+  postgresql:
+    interface: pgsql
+
