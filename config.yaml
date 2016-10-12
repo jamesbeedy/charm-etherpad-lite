@@ -1,0 +1,42 @@
+options:
+  fqdn:
+    default: "etherpad.creativedrive.com" 
+    description: |
+      FQDN to use for etherpad frontend
+    type: string
+  install_sources:
+    type: string
+    description: |
+      Apt sources
+    default: |
+      - "deb https://deb.nodesource.com/node_4.x main"
+  install_keys:
+    type: string
+    description: |
+      Apt repo keys
+    default: |
+      - '68576280'
+  app-path:
+    type: string
+    default: /srv/etherpad
+    description: |
+      The default location of etherpad
+  port:
+    type: int
+    default: 80
+    description: |
+      NGINX listen port
+  host:
+    type: string
+    default: 127.0.0.1
+    description: listen address
+  repo:
+    type: string
+    default: "https://github.com/ether/etherpad-lite.git"
+    description: The repository to clone from, this is required
+  key-required:
+    type: boolean
+    default: false
+    description: |
+      This should be set to true to ensure that a deploy key is
+      deployed if necessary

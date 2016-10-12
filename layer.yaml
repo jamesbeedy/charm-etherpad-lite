@@ -1,13 +1,24 @@
 includes:
  - 'layer:basic'
  - 'layer:nginx'
- - 'layer:node'
+ - 'layer:nodejs'
  - 'layer:git-deploy'
  - 'layer:tls-client'
  - 'interface:pgsql'
  - 'interface:http'
 repo: https://github.com/jamesbeedy/charm-etherpad-lite
 options:
+  basic:
+    packages:
+      - 'gzip'
+      - 'git'
+      - 'curl'
+      - 'python'
+      - 'libssl-dev'
+      - 'pkg-config'
+      - 'build-essential'
+  git-deploy:
+    target: "/srv/etherpad"
   tls-client:
     ca_certificate_path: "/etc/ssl/certs/ca.crt"
     server_certificate_path: "/etc/ssl/certs/server.crt"

@@ -1,0 +1,11 @@
+[Unit]
+Description=Etherpad
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/srv/etherpad-lite
+ExecStart=/srv/etherpad-lite/bin/run.sh
+Restart=always
+RestartSec=1
