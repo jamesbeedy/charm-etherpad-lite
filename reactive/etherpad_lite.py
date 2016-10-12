@@ -58,20 +58,18 @@ def config_changed():
         close_port(conf.previous('port'))
     if conf.get('port'):
         open_port(conf['port'])
-    setup()
 
 
 @when('postgresql.connected')
 @when_not('etherpad.db.requested')
-def request_etherpad_database(pgsql):
+def request_etherpad_database(db):
     """Request etherpad db
     """
 
     status_set('maintenance', 'Requesting PostgreSQL database for Etherpad.')
     # Request database for Etherpad
-    if is_leader():
-        pgsql.set_database("etherpad")
-        # Set active status
+    db.set_database("etherpad")
+    # Set active status
     status_set('active', 'PostgreSQL database requested')
     # Set state
     set_state('etherpad.db.requested')
@@ -110,7 +108,7 @@ def setup():
         status_set('blocked', 'need relation to postgresql')
         return
 
-    settings_target = "/srv/etherpad-lite/settings.json"
+    settings_target = os.path.join(config('app-path'), 'settings.json')
 
     if os.path.exists(settings_target):
         os.remove(settings_target)
