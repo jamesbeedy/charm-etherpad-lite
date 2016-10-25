@@ -80,6 +80,7 @@ def get_set_db_data(db):
                     'db_pass': db.master.password})
     # Set perms
     chownr(path='/var/www', owner='www-data', group='www-data')
+    chownr(path=config('app-path'), owner='www-data', group='www-data')
     set_state('etherpad.initialized')
     status_set('active', 'Etherpad initialized')
 
