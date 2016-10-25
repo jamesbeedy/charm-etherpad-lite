@@ -9,7 +9,7 @@ options:
     description: |
       Apt sources
     default: |
-      - "deb https://deb.nodesource.com/node_4.x main"
+      - "deb https://deb.nodesource.com/node_4.x xenial main"
   install_keys:
     type: string
     description: |

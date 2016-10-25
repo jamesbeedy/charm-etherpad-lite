@@ -1,5 +1,4 @@
 import os
-import socket
 
 from charms.reactive import (
     hook,
@@ -13,16 +12,14 @@ from charmhelpers.core.hookenv import (
     close_port,
     open_port,
     unit_public_ip,
-    unit_private_ip,
-    is_leader,
     config,
-    local_unit
 )
 
 from charmhelpers.core.host import (
     service_running,
     service_start,
-    service_restart
+    service_restart,
+    chownr
 )
 
 from charmhelpers.core.templating import render
@@ -32,13 +29,7 @@ from charms.layer.nginx import configure_site
 from charms.layer import options
 
 
-opts = options('tls-client')
-SRV_KEY = opts.get('server_key_path')
-SRV_CRT = opts.get('server_certificate_path')
-
-
 @when_not('etherpad.systemd.installed')
-@when('codebase.available')
 def install_etherpad():
 
     # Render systemd template
@@ -51,16 +42,7 @@ def install_etherpad():
     status_set('active', 'Etherpad systemd service ready')
 
 
-@hook('config-changed')
-def config_changed():
-    conf = config()
-    if conf.changed('port') and conf.previous('port'):
-        close_port(conf.previous('port'))
-    if conf.get('port'):
-        open_port(conf['port'])
-
-
-@when('postgresql.connected')
+@when('db.connected')
 @when_not('etherpad.db.requested')
 def request_etherpad_database(db):
     """Request etherpad db
@@ -75,105 +57,42 @@ def request_etherpad_database(db):
     set_state('etherpad.db.requested')
 
 
-@when_not('etherpad.db.available')
-@when('postgresql.master.available')
-def get_set_db_data(db):
-    unit_data = kv()
-    etherpad_db = {}
-    etherpad_db['db_name'] = db.master.dbname
-    etherpad_db['db_pass'] = db.master.password
-    etherpad_db['db_host'] = db.master.host
-    etherpad_db['db_user'] = db.master.user
-    unit_data.set('db', etherpad_db)
-    set_state('etherpad.db.available')
-
-
-@when('etherpad.db.available', 'codebase.available',
-      'etherpad.systemd.available')
 @when_not('etherpad.initialized')
-def configure_etherpad():
-    """Call setup
-    """
-    setup()
-    set_state("etherpad.initialized")
-
-
-def setup():
-    """Gather and write out etherpad configs
-    """
-
-    unit_data = kv()
-    db = unit_data.get('db')
-    if not db:
-        status_set('blocked', 'need relation to postgresql')
-        return
+@when('db.master.available')
+def get_set_db_data(db):
 
     settings_target = os.path.join(config('app-path'), 'settings.json')
+    settings_tmpl = os.path.join(config('app-path'), 'settings.json.template')
 
     if os.path.exists(settings_target):
         os.remove(settings_target)
+    if os.path.exists(settings_tmpl):
+        os.remove(settings_tmpl)
 
     render(source='settings.json.tmpl',
            target=settings_target,
            perms=0o644,
            owner='www-data',
-           context=db)
-
-    restart_service()
-    status_set('active', 'Etherpad configured')
-
-
-@when('certificates.available')
-def send_data(tls):
-    # Use the public ip of this unit as the Common Name for the certificate.
-    common_name = unit_public_ip()
-    # Get a list of Subject Alt Names for the certificate.
-    sans = []
-    sans.append(unit_public_ip())
-    sans.append(unit_private_ip())
-    sans.append(socket.gethostname())
-    # Create a path safe name by removing path characters from the unit name.
-    certificate_name = local_unit().replace('/', '_')
-    # Send the information on the relation object.
-    tls.request_server_cert(common_name, sans, certificate_name)
+           context={'db_name': db.master.dbname,
+                    'db_host': db.master.host,
+                    'db_port': db.master.port,
+                    'db_user': db.master.user,
+                    'db_pass': db.master.password})
+    # Set perms
+    chownr(path='/var/www', owner='www-data', group='www-data')
+    set_state('etherpad.initialized')
+    status_set('active', 'Etherpad initialized')
 
 
-@when('certificates.server.cert.available')
-@when_not('etherpad.ssl.available')
-def save_crt_key(tls):
-    '''Read the server crt/key from the relation object and
-    write to /etc/ssl/certs'''
-
-    # Remove the crt/key if they pre-exist
-    if os.path.exists(SRV_CRT):
-        os.remove(SRV_CRT)
-    if os.path.exists(SRV_KEY):
-        os.remove(SRV_KEY)
-
-    # Get and write out crt/key
-    server_cert, server_key = tls.get_server_cert()
-
-    with open(SRV_CRT, 'w') as crt_file:
-        crt_file.write(server_cert)
-    with open(SRV_KEY, 'w') as key_file:
-        key_file.write(server_key)
-
-    status_set('active', 'TLS crt/key ready')
-    set_state('etherpad.ssl.available')
-
-
-@when('nginx.available', 'etherpad.ssl.available',
-      'etherpad.initialized')
+@when('nginx.available', 'etherpad.initialized')
 @when_not('etherpad.web.configured')
 def configure_webserver():
     """Configure nginx
     """
 
     status_set('maintenance', 'Configuring website')
-    configure_site('etherpad', 'etherpad.nginx.tmpl',
-                   key_path=SRV_KEY,
-                   crt_path=SRV_CRT, fqdn=config('fqdn'))
-    open_port(443)
+    configure_site('etherpad', 'etherpad.nginx.tmpl')
+    open_port(80)
     restart_service()
     status_set('active', 'Etherpad available: %s' % unit_public_ip())
     set_state('etherpad.web.configured')

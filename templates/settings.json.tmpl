@@ -36,25 +36,18 @@
 
   */
 
-  //The Type of the database. You can choose between dirty, postgres, sqlite and mysql
-  //You shouldn't use "dirty" for for anything else than testing or development
-  "dbType" : "dirty",
-  //the database specific settings
-  "dbSettings" : {
-                   "filename" : "var/dirty.db"
-                 },
-/*
    "dbType" : "postgres",
    "dbSettings" : {
                     "user"    : "{{db_user}}",
                     "host"    : "{{db_host}}",
+                    "port"    : "{{db_port}}",
                     "password": "{{db_pass}}",
                     "database": "{{db_name}}",
                     "charset" : "UTF8"
                   },
 
   //the default text of a pad
-  "defaultPadText" : "Welcome to Etherpad!\n\nThis pad text is synchronized as you type, so that everyone viewing this page sees the same text. This allows you to collaborate seamlessly on documents!\n\nGet involved with Etherpad at http:\/\/etherpad.org\n",
+  "defaultPadText" : "Welcome to Etherpad!\n\nThis pad text is synchronized as you type, so that everyone viewing this page sees the same text. This allows you to collaborate seamlessly on documents!\n",
 
   /* Default Pad behavior, users can override by changing */
   "padOptions": {
@@ -63,11 +56,11 @@
     "showChat": true,
     "showLineNumbers": true,
     "useMonospaceFont": false,
-    "userName": false,
-    "userColor": false,
+    "userName": true,
+    "userColor": true,
     "rtl": false,
     "alwaysShowChat": false,
-    "chatAndUsers": false,
+    "chatAndUsers": true,
     "lang": "en-gb"
   },
 
@@ -121,7 +114,6 @@
 
   /* Users for basic authentication. is_admin = true gives access to /admin.
      If you do not uncomment this, /admin will not be available! */
-  /*
   "users": {
     "admin": {
       "password": "changeme1",
@@ -132,7 +124,6 @@
       "is_admin": false
     }
   },
-  */
 
   // restrict socket.io transport methods
   "socketTransportProtocols" : ["xhr-polling", "jsonp-polling", "htmlfile"],

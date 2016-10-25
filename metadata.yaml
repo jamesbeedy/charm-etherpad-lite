@@ -15,6 +15,6 @@ provides:
   website:
     interface: http
 requires:
-  postgresql:
+  db:
     interface: pgsql
 
